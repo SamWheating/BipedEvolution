@@ -1,9 +1,10 @@
-# NEATpy
-Neuroevolution of Augmenting Topologies (NEAT) algorithm implementation in Python
+# BipedEvolution
+
+Evolutionary optimization of neural networks implemented in Python
 
 Created as a personal challenge for HackUVIC 2018 Hackathon.
 
-Going to try to beat the OpenAI walking Biped challenge using genetic optimization of Artificial Neural Networks, more specifically the NEAT algorithm.
+Original plan: try to beat the OpenAI walking Biped challenge using genetic optimization of Artificial Neural Networks, more specifically the NEAT algorithm.
 
 https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_topologies
 
