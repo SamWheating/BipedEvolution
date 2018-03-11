@@ -28,3 +28,5 @@ Then I had issues writing an effective genetic crossover for neural-network base
   4) Go to (2), repeat for number of generations. Reduce amplitude of mutations for each generation.
 
 The results were kind of promising as the biped moved from a totally uncontrolled state in the last generation to a more consistent state after seven generations.
+
+![Comparison of first and seventh generation](https://github.com/SamWheating/BipedEvolution/blob/master/sidebyside.gif?raw=true)
