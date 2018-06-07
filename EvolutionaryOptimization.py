@@ -9,31 +9,38 @@ env.reset()
 initial_action = [0.0, 0.0, 0.0, 0.0]
 
 # Basic Algorithm Plan:
-#
 # FIrst round is 500 specimens, totally random. Mass extinction leaves the ten most fit
 # Successive rounds, 50 specimens / generation
 # Elitism favours top 10, unaltered to next generation
 # Muatated clones of the top 10 make up another 40 samples
 
-
-# going to use a consistent topology because tensorflow is unfriendly with dynamic topologies
+# going to use a consistent topology because tensorflow is unfriendly with dynamic or irregular topologies
 # (Apparently pytorch is better for this)
 # This is more or less randomly designed, this is an experiment after all.
+
+# Room for improvement:
+# Parallelization of the search space.
+# Evaluation of learning / mutation rates
+# Genetic crossover (Wouldnt Necessarily Work, but worth trying)
+# New Scoring metric based only on distance.
+# Better detection of cyclic or recurring behaviour.
+
+# NEURAL NETWORK ARCHITECTURE
 
 n_hidden_1 = 24
 n_hidden_2 = 24
 n_hidden_3 = 24
-num_input = 24 # output from the walker, number of items in input layer of ANN
-num_outputs = 4 # output size (4 motors speeds)
+num_input = 24 		# output from the walker, number of items in input layer of ANN
+num_outputs = 4 	# output size (4 motors speeds)
 
 # CONTROL VARIABLES
 
 SIMULATION_STEPS = 600 		# how many frames to render before timeout
 INITIAL_POPULATION = 500	# massive starting population	
 POPULATION_SIZE = 50		# successive population size
-
 ELITISM = 10				# best specimens carried to the next round unaltered
 MULTIPLICATION_FACTOR = 5 	# rate at which elite multiply on each generation
+MUTATION_PROBABILITY = 0.1	# chance of a given connection being mutated
 
 class Genome:
 
@@ -53,6 +60,7 @@ class Genome:
 			'out': np.zeros((n_hidden_2, num_outputs), dtype='float32')		# weights of output layer connections 
 		}
 
+		# Biases may not be necessary here.
 		self.biases = {
 			'b1': np.zeros(n_hidden_1, dtype='float32'),	# biases of first hidden layer
 			'b2': np.zeros(n_hidden_2, dtype='float32'),	# biases of second hidden layer
@@ -66,14 +74,16 @@ def mutate(genome, magnitude):
 	# Randomize a small fraction of biases 
 	for key, value in genome.biases.items():
 		for row in range(value.shape[0]):
-			value[row] += np.random.uniform((-1*magnitude), magnitude)
+			if np.random.uniform(0, 1) < MUTATION_PROBABILITY:
+				value[row] += np.random.uniform((-1*magnitude), magnitude)
 
 
 	# Randomize a small fraction of weights
 	for key, value in genome.weights.items():
 		for row in range(value.shape[0]):
 			for col in range(value.shape[1]):
-				value[row][col] += np.random.uniform((-1*magnitude), magnitude)
+				if np.random.uniform(0, 1) < MUTATION_PROBABILITY:
+					value[row][col] += np.random.uniform((-1*magnitude), magnitude)
 
 	return genome
 
@@ -88,13 +98,9 @@ def fitness_test(genome, render=False):
 	# Store layers weight & biases
 
 	def neural_net(x):
-		# Hidden fully connected layer with 12 neurons
 		layer_1 = tf.add(tf.matmul(x, genome.weights['h1']), genome.biases['b1'])
-		# Hidden fully connected layer with 12 neurons
 		layer_2 = tf.add(tf.matmul(layer_1, genome.weights['h2']), genome.biases['b2'])
-		# Hidden fully connected layer with 12 neurons
 		layer_3 = (tf.matmul(layer_2, genome.weights['h3']))
-		# Output fully connected layer with 4 neurons to control the four inputs of the biped.
 		out_layer = tf.matmul(layer_3, genome.weights['out']) + genome.biases['out']
 
 		return out_layer
@@ -124,11 +130,11 @@ def fitness_test(genome, render=False):
 
 		else:
 
-			prediction = sess.run(logits, feed_dict={X: np.transpose(np.array(previous_state))})
+			prediction = sess.run(logits, feed_dict={X: np.transpose(np.array(previous_state))})  # take action dictated by neural network
 			observation, reward, done, info = env.step(prediction[0])
 
 			indicator = (round(observation[0], 4))
-			 								# take action dictated by neural network
+			 								
 			detector.append(indicator)
 
 			if len(detector) > 20:
@@ -180,7 +186,7 @@ if __name__ == "__main__":
 	max_strengths = []
 	deviations = []
 
-	rates = [0.1, 0.1, 0.01, 0.01, 0.01, 0.01]  # hardcoded mutation rates
+	rates = [0.2, 0.1, 0.05, 0.01, 0.01, 0.01]  # hardcoded mutation rates
 
 	NUM_GENERATIONS = len(rates)
 
